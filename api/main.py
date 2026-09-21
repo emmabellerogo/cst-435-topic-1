@@ -10,6 +10,7 @@ concerns across the three clouds.
 """
 from __future__ import annotations
 
+import math
 import os
 import subprocess
 
@@ -94,7 +95,7 @@ def train(req: TrainRequest) -> TrainResponse:
     if dataset is None:
         raise HTTPException(status_code=404, detail="dataset_id not found")
 
-    metrics, weights, _loss = train_linear_regression(
+    metrics, weights, loss = train_linear_regression(
         dataset["xs"],
         dataset["ys"],
         lr=req.lr,
@@ -102,6 +103,24 @@ def train(req: TrainRequest) -> TrainResponse:
         epochs=req.epochs,
         test_size=req.test_size,
     )
+
+    # A too-large learning rate makes the loss blow up to Infinity/NaN. Those
+    # values are not valid JSON (Supabase rejects them with PGRST102) and are not
+    # meaningful metrics, so report the divergence instead of storing anything.
+    bad_epoch = next((i + 1 for i, v in enumerate(loss) if not math.isfinite(v)), None)
+    values = [*metrics.values(), *weights.values()]
+    if bad_epoch is not None or not all(math.isfinite(v) for v in values):
+        where = f" at epoch {bad_epoch}" if bad_epoch is not None else ""
+        return TrainResponse(
+            diverged=True,
+            diverged_at_epoch=bad_epoch,
+            message=(
+                f"Training diverged{where}: the loss became non-finite (NaN/Infinity) "
+                f"with lr={req.lr}. No metrics were produced and no run was saved. "
+                "Try a smaller learning rate."
+            ),
+        )
+
     run = db.insert_run(
         dataset_id=req.dataset_id,
         lr=req.lr,

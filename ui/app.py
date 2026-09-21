@@ -119,20 +119,23 @@ with train_tab:
                     "epochs": int(epochs),
                 },
             )
-        st.session_state["last_run_id"] = resp["run_id"]
-        m = resp["metrics"]
-        st.success(f"Run {resp['run_id']} complete.")
-        mc1, mc2, mc3 = st.columns(3)
-        mc1.metric("MSE", f"{m['mse']:.3f}")
-        mc2.metric("MAE", f"{m['mae']:.3f}")
-        mc3.metric("R²", f"{m['r2']:.3f}")
+        if resp.get("diverged"):
+            st.error(resp["message"])
+        else:
+            st.session_state["last_run_id"] = resp["run_id"]
+            m = resp["metrics"]
+            st.success(f"Run {resp['run_id']} complete.")
+            mc1, mc2, mc3 = st.columns(3)
+            mc1.metric("MSE", f"{m['mse']:.3f}")
+            mc2.metric("MAE", f"{m['mae']:.3f}")
+            mc3.metric("R²", f"{m['r2']:.3f}")
 
-        # Fitted-line overlay against the raw dataset points.
-        ds = api_get(f"/runs/{resp['run_id']}")
-        w = resp["weights"]
-        st.markdown(
-            f"Fitted line: **y = {w['slope']:.3f}·x + {w['intercept']:.3f}**"
-        )
+            # Fitted-line overlay against the raw dataset points.
+            ds = api_get(f"/runs/{resp['run_id']}")
+            w = resp["weights"]
+            st.markdown(
+                f"Fitted line: **y = {w['slope']:.3f}·x + {w['intercept']:.3f}**"
+            )
 
 # ---------------------------------------------------------------------------
 # Predict

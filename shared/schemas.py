@@ -72,9 +72,23 @@ class Run(BaseModel):
 
 
 class TrainResponse(BaseModel):
-    run_id: int
-    metrics: Metrics
-    weights: dict = Field(..., description="Fitted {'slope': .., 'intercept': ..}.")
+    """Result of POST /train.
+
+    When training diverges (loss/metrics/weights become NaN or Infinity) there
+    are no real numbers to report or store, so ``diverged`` is True, ``run_id``,
+    ``metrics`` and ``weights`` are None, and nothing is written to Supabase.
+    """
+
+    run_id: Optional[int] = None
+    metrics: Optional[Metrics] = None
+    weights: Optional[dict] = Field(
+        None, description="Fitted {'slope': .., 'intercept': ..}."
+    )
+    diverged: bool = False
+    diverged_at_epoch: Optional[int] = Field(
+        None, description="1-based epoch where the training loss first became non-finite."
+    )
+    message: Optional[str] = None
 
 
 # ---------------------------------------------------------------------------
