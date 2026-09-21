@@ -1,19 +1,16 @@
-# Regress-It — Three-Cloud Reference Template
+# Regress-It — CST-435 Topic 1: Three-Cloud Architecture
 
-> A working, forkable template for a three-cloud architecture:
-> **Streamlit (UI) ⇄ FastAPI (Model API) ⇄ Supabase (Data)**. Fork it, wire up
-> your own accounts, and reuse the exact same pattern for the other templates in
-> this repository.
+> A completed three-cloud deployment of the Regress-It linear-regression demo:
+> **Streamlit (UI) ⇄ FastAPI (Model API) ⇄ Supabase (Data)**. Each tier runs on a
+> separate cloud platform and talks to the next over HTTPS.
 
-## Live deployment URLs (fill these in)
+## Live deployment
 
 | Tier | Platform | URL |
 |------|----------|-----|
-| **UI** | Streamlit Community Cloud | `https://<your-app>.streamlit.app` |
-| **API** | Render.com | `https://<your-api>.onrender.com` |
-| **Data** | Supabase | `https://<your-project-ref>.supabase.co` |
-
-> Replace the placeholders above with your real URLs once deployed.
+| **UI** | Streamlit Community Cloud | `<STREAMLIT_URL>` <!-- TODO: replace with the public Streamlit URL --> |
+| **API** | FastAPI on Render | `<RENDER_API_URL>` <!-- TODO: replace with the public Render URL --> |
+| **Data** | Supabase PostgreSQL | Managed Supabase project (accessed only by the API and, read-only, by the UI) |
 
 ---
 
@@ -100,6 +97,31 @@ streamlit run ui/app.py
 To deploy to the three clouds, follow **Part E** of [`TUTORIAL.md`](./TUTORIAL.md):
 apply `db/migrations/001_init.sql` in the Supabase SQL Editor → deploy the API
 from `render.yaml` on Render → deploy the UI on Streamlit Community Cloud.
+
+## Deployment and testing
+
+The three tiers are deployed and connected:
+
+- **Streamlit Community Cloud** hosts the UI (`ui/app.py`), a thin client that calls the API.
+- **Render** hosts the FastAPI model API (`api/main.py`), which trains and serves the PyTorch model.
+- **Supabase PostgreSQL** stores datasets, runs, and predictions (schema in `db/migrations/001_init.sql`).
+
+Secrets (Supabase URL and keys) are set as environment variables on Render and
+as Streamlit secrets; they are not committed to this repository.
+
+### Verification results (deployed API)
+
+| Check | Request | Result |
+|-------|---------|--------|
+| Health | `GET /healthz` | `status: ok`, `model_loader: true`, `supabase: true` |
+| Dataset creation | `POST /datasets` | HTTP 200, dataset saved to Supabase |
+| Training (stable) | `POST /train` with `lr=0.01` | Succeeded — MSE ≈ 4.131, MAE ≈ 1.595, R² ≈ 0.981 |
+| Prediction | `POST /predict` with `x=4` | ŷ ≈ 10.76 |
+| Training (divergent) | `POST /train` with `lr=1.5` | Handled safely as a divergence case; no run was saved |
+
+The `lr=1.5` case confirms that when the loss becomes non-finite (NaN/Infinity),
+the API returns a response flagged `diverged: true` with an explanatory message
+and does not write a run to Supabase.
 
 ## API endpoints
 
