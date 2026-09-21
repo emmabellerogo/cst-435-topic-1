@@ -12,9 +12,16 @@ Environment variables (set locally in a .env, and in the Render dashboard):
 from __future__ import annotations
 
 import os
+from pathlib import Path
 from typing import List, Optional
 
+from dotenv import load_dotenv
 from supabase import Client, create_client
+
+# Local development: load the repo-root .env regardless of the working directory.
+# Real environment variables (e.g. Render's dashboard) are never overridden, and a
+# missing .env is a silent no-op.
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 _client: Optional[Client] = None
 
