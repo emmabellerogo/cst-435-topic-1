@@ -24,3 +24,14 @@
 - **What was verified:** the failure was reproduced locally and confirms the user's NaN/Infinity hypothesis; the new tests fail if a diverged run is ever persisted; the full suite passes; the diff is limited to the four files above; no secrets were read or printed (`.env` untouched this session, and git-ignored). **Not verified:** the fix against the deployed Render service or a real Supabase instance, and the Streamlit change in a browser — both need a redeploy. The `PGRST102` explanation is reasoned from the JSON spec and the observed `nan` values, not from a captured request body. My own review of the diff is pending before commit.
 - **Status:** Uncommitted, pending review.
 - **Full transcript:** [claude-002-diverging-training.md](ai_conversations/claude-002-diverging-training.md)
+
+## 2026-09-20 — claude-003: README documents the three-cloud deployment
+
+- **Tool:** Claude Code (Claude Opus 5)
+- **Task:** Update `README.md` to describe the finished Streamlit Community Cloud UI, the FastAPI API on Render and the Supabase PostgreSQL database, and record the deployed endpoint tests.
+- **Files changed:** `README.md` (+32/-11). Plus `ai_documentation/ai_conversations/claude-003-readme-documentation.md` and this log. No application code, `.env` or deployment settings were touched.
+- **Changes:** New title and intro. The live deployment table now names each tier's platform. A new "Deployment and testing" section lists the checks: `/healthz` ok with `model_loader` and `supabase` true; `POST /datasets` HTTP 200; `lr=0.01` MSE ≈ 4.131, MAE ≈ 1.595, R² ≈ 0.981; `x=4` → ≈ 10.76; `lr=1.5` handled as divergence with no run saved.
+- **Correction during the session:** the first draft said a diverged run "returns an error". It was checked against `api/main.py:107-118` and corrected: the API returns a normal response with `diverged: true` and a message.
+- **What was verified:** the divergence wording matches the code, and `README.md` is the only changed file. The endpoint results came from my prompt; Claude did not call the deployed API. The public URLs are still `<STREAMLIT_URL>` / `<RENDER_API_URL>` placeholders, because my prompt still had the template text.
+- **Status:** I committed the README change as `1f279a7` (33 insertions, 11 deletions; Claude's edit was +32/-11). The real URLs are still pending.
+- **Full transcript:** [claude-003-readme-documentation.md](ai_conversations/claude-003-readme-documentation.md)
