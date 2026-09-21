@@ -35,3 +35,14 @@
 - **What was verified:** the divergence wording matches the code, and `README.md` is the only changed file. The endpoint results came from my prompt; Claude did not call the deployed API. The public URLs are still `<STREAMLIT_URL>` / `<RENDER_API_URL>` placeholders, because my prompt still had the template text.
 - **Status:** I committed the README change as `1f279a7` (33 insertions, 11 deletions; Claude's edit was +32/-11). The real URLs are still pending.
 - **Full transcript:** [claude-003-readme-documentation.md](ai_conversations/claude-003-readme-documentation.md)
+
+## 2026-09-20 — claude-004: model card documents the reference run
+
+- **Tool:** Claude Code (Claude Opus 5)
+- **Task:** Update `MODEL_CARD.md` with the reference dataset, training settings, metrics, a prediction check and the divergence limitation, keeping the existing structure.
+- **Files changed:** `MODEL_CARD.md` (additions only, no lines removed). Plus `ai_documentation/ai_conversations/claude-004-model-card.md` and this log. No application code, `.env` or deployment settings were touched.
+- **Changes:** Model details now lists `lr=0.01`, batch size 32, 100 epochs. Data lists slope 2.5, intercept 1.0, noise 2.0, 500 points. Metrics has a table (MSE ≈ 4.131, MAE ≈ 1.595, R² ≈ 0.981) and the `x=4` → ≈ 10.76 check. Limitations says `lr=1.5` diverges, and the API reports it without saving a run.
+- **Assistant suggestions:** it labeled the metrics as held-out test-split results, based on the card's existing text. It also added a comparison with the true line's value (11.0 at `x=4`). It flagged both for me to confirm, and noted the Owner line is still a placeholder.
+- **What was verified:** the divergence wording matches `api/main.py:109-118`; `MODEL_CARD.md` is the only changed file. The metrics and prediction came from my prompt; Claude did not train the model or call the API.
+- **Status:** Uncommitted, pending review.
+- **Full transcript:** [claude-004-model-card.md](ai_conversations/claude-004-model-card.md)
